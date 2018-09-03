@@ -57,7 +57,7 @@ class SegmentTree:
 		return dfs(self.root)
 
 	def normalize(self, node):
-        # update k using lazy value
+		# update k using lazy value
 		if node.lazy != 0: node.k += node.lazy
 		if node.l < node.r:
 			if not node.left:
