@@ -31,12 +31,12 @@ class SegmentTree:
 			# no overlap
 			if i > j or node == None or i > node.r or j < node.l:
 				return
-            # total overlap: update lazy and propagate
+			# total overlap: update lazy and propagate
 			if i <= node.l and node.r <= j:
 				node.lazy = val
 				self.normalize(node)
 				return
-            # update children first and then self
+			# update children first and then self
 			dfs(node.left)
 			dfs(node.right)
 			node.k = max(node.left.k, node.right.k)
@@ -64,11 +64,11 @@ class SegmentTree:
 				m = node.l + (node.r - node.l) // 2
 				node.left = SegmentTreeNode(node.l, m, node.k)
 				node.right = SegmentTreeNode(m + 1, node.r, node.k)
-            # propagate to children
+			# propagate to children
 			elif node.lazy != 0:
 				node.left.lazy += node.lazy
 				node.right.lazy += node.lazy
-        # reset lazy value
+		# reset lazy value
 		node.lazy = 0
 
 
