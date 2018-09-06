@@ -55,9 +55,3 @@ cache.put(4, 4)
 cache.get(2)
 cache.put(5, 5)
 print([cache.get(i) for i in range(1, 6)])
-
-
-
-
-
-		

@@ -21,6 +21,7 @@ class UnionFind(object):
 			self.par[yr] = xr
 			self.rnk[xr] += 1
 			
+
 uf = UnionFind()
 for i in range(10):
 	uf[i]

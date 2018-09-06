@@ -54,4 +54,3 @@ int main(int argc, char *argv[]) {
 		cout << cache.get(i) << ' ';
 	cout << endl;
 }
-
