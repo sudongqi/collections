@@ -10,16 +10,14 @@ def dijsktra(edges, source, target):
 		graph[b].append((a, cost))
 	
 	q = [(source, 0)]
-	check = set()
-	dist = {}
+	dist = {source: 0}
 	prev = {source: source}
 	
 	while q:
 		curr, cost = heappop(q)
-		check.add(curr)
 		for nei, add_cost in graph[curr]:
 			new_cost = cost + add_cost
-			if nei not in check and new_cost < dist.get(nei, float('inf')):
+			if new_cost < dist.get(nei, float('inf')):
 				heappush(q, (nei, new_cost))
 				dist[nei] = new_cost
 				prev[nei] = curr
