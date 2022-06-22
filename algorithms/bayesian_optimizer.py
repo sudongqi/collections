@@ -37,12 +37,7 @@ def search(f, best_res, bounds, max_attempt=200, num_workers=8, delta=0.0001):
     inp = Queue()
     out = Queue()
 
-    uf = UtilityFunction(kind="ucb",
-                         kappa=2.576,
-                         kappa_decay=1,
-                         kappa_decay_delay=0,
-                         xi=0.0,
-                         )
+    uf = UtilityFunction(kind="ucb", kappa=2.576, kappa_decay=1, kappa_decay_delay=0, xi=0.0,)
     optimizer = BayesianOptimization(pbounds=bounds, f=f)
     explored = set()
 
