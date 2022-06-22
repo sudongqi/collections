@@ -15,13 +15,25 @@ class Worker(Process):
         print('Worker started')
         # do some initialization here
         while True:
-            inp = self.inp.get()
-            res = self.f(**inp)
-            self.out.put({'params': inp, 'target': res})
+            try:
+                inp = self.inp.get()
+                res = self.f(**inp)
+                self.out.put({'params': inp, 'target': res})
+            except Exception as e:
+                self.out.put({'msg': e})
 
 
-def black_box_function(x, y):
-    return -x ** 2 - (y - 1) ** 2 + 1
+def serialize_dict(d):
+    return ' '.join(map(str, d.values()))
+
+
+def uniform_sample(bounds, explored):
+    while True:
+        d = {k: random.uniform(*v) for k, v in bounds.items()}
+        d_key = serialize_dict(d)
+        if d_key not in explored:
+            explored.add(d_key)
+            return d
 
 
 def search(f, best_res, bounds, max_attempt=200, num_workers=8, delta=0.0001):
@@ -35,29 +47,30 @@ def search(f, best_res, bounds, max_attempt=200, num_workers=8, delta=0.0001):
                          xi=0.0,
                          )
     optimizer = BayesianOptimization(pbounds=bounds, f=f)
+    explored = set()
 
     processes = []
     for i in range(num_workers):
-        inp.put({k: random.uniform(*v) for k, v in bounds.items()})
+        inp.put(uniform_sample(bounds, explored))
         worker = Worker(inp=inp, out=out, f=f)
         worker.start()
         processes.append(worker)
 
     res = []
-    curr_best_res = - float('inf')
-    while len(res) < max_attempt:
+    curr_best_res = -float('inf')
+    while len(res) < max_attempt and abs(best_res - curr_best_res) > delta:
         r = out.get()
         try:
             optimizer.register(**r)
-        except KeyError:
-            print('duplicated inputs')
-        new_point = optimizer.suggest(uf)
-        inp.put(new_point)
-        res.append(r)
-        print(r)
-        if abs(best_res - r['target']) < delta:
-            break
-        curr_best_res = max(curr_best_res, r['target'])
+            new_point = optimizer.suggest(uf)
+            inp.put(new_point)
+            explored.add(serialize_dict(new_point))
+            res.append(r)
+            curr_best_res = max(curr_best_res, r['target'])
+            print(r)
+        except:
+            print('params={} failed ... trying a new random point'.format(r['params']))
+            inp.put(uniform_sample(bounds, explored))
 
     print('best = {}, took {} steps, {} step/worker'.format(
         curr_best_res,
@@ -69,9 +82,14 @@ def search(f, best_res, bounds, max_attempt=200, num_workers=8, delta=0.0001):
         worker.terminate()
 
 
+def black_box_function(x, y):
+    return -x ** 2 - (y - 1) ** 2 + 1
+
+
 if __name__ == '__main__':
     search(
         f=black_box_function,
         best_res=-3,
-        bounds={'x': (2, 4), 'y': (-3, 3)}
+        bounds={'x': (2, 4), 'y': (-3, 3)},
+        num_workers=8
     )
