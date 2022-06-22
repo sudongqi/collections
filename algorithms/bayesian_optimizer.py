@@ -5,22 +5,19 @@ from bayes_opt.util import UtilityFunction
 
 
 class Worker(Process):
-    def __init__(self, inp, out, f):
+    def __init__(self, inp, out, f, worker_id):
         super(Worker, self).__init__()
+        self.worker_id = worker_id
         self.inp = inp
         self.out = out
         self.f = f
 
     def run(self):
-        print('Worker started')
-        # do some initialization here
+        print('worker {} started'.format(self.worker_id))
         while True:
-            try:
-                inp = self.inp.get()
-                res = self.f(**inp)
-                self.out.put({'params': inp, 'target': res})
-            except Exception as e:
-                self.out.put({'msg': e})
+            inp = self.inp.get()
+            res = self.f(**inp)
+            self.out.put({'worker_id': self.worker_id, 'params': inp, 'target': res})
 
 
 def serialize_dict(d):
@@ -52,7 +49,7 @@ def search(f, best_res, bounds, max_attempt=200, num_workers=8, delta=0.0001):
     processes = []
     for i in range(num_workers):
         inp.put(uniform_sample(bounds, explored))
-        worker = Worker(inp=inp, out=out, f=f)
+        worker = Worker(inp=inp, out=out, f=f, worker_id=i)
         worker.start()
         processes.append(worker)
 
@@ -61,7 +58,7 @@ def search(f, best_res, bounds, max_attempt=200, num_workers=8, delta=0.0001):
     while len(res) < max_attempt and abs(best_res - curr_best_res) > delta:
         r = out.get()
         try:
-            optimizer.register(**r)
+            optimizer.register(params=r['params'], target=r['target'])
             new_point = optimizer.suggest(uf)
             inp.put(new_point)
             explored.add(serialize_dict(new_point))
